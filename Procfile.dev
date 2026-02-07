@@ -1,0 +1,7 @@
+web: bin/rails server
+jobs: bin/jobs
+css: bin/rails tailwindcss:watch
+
+# IMPORTANT: Do not remove the jobs process. It runs Solid Queue in a separate
+# process, isolating background jobs from web code reloads. Without this,
+# streaming Claude Code sessions will break when code changes.

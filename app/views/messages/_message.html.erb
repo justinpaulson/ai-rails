@@ -1,0 +1,57 @@
+<%# Skip tool_use and tool_result - they're rendered via _tool_call.html.erb %>
+<% return if message.tool_use? || message.tool_result? %>
+
+<%= turbo_frame_tag dom_id(message) do %>
+  <div class="mb-3 <%= message_container_classes(message) %>" id="<%= dom_id(message) %>">
+    <% case message.message_type %>
+    <% when "text" %>
+      <div class="<%= message_bubble_classes(message) %>">
+        <div class="text-xs font-medium mb-1 <%= message.user? ? 'text-blue-200' : 'text-gray-500' %>">
+          <%= message.role.capitalize %>
+        </div>
+        <div class="prose prose-sm max-w-none <%= message.user? ? 'prose-invert' : '' %>">
+          <% if message.assistant? %>
+            <%= markdown(message.content) %>
+          <% else %>
+            <%= simple_format(message.content) %>
+          <% end %>
+        </div>
+        <% if first_user_message?(message) %>
+          <div class="mt-2 pt-2 border-t border-blue-500/30 flex gap-2">
+            <%= button_to replay_conversation_path(message.conversation),
+                          method: :post,
+                          data: { turbo: false },
+                          class: "inline-flex items-center gap-1 text-xs text-blue-200 hover:text-white transition-colors",
+                          title: "Start new conversation with same prompt" do %>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+              Replay
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+
+    <% when "system_init" %>
+      <div class="text-center text-xs text-gray-400 py-2">
+        <span class="bg-gray-800 px-2 py-1 rounded">Session started</span>
+      </div>
+
+    <% when "result" %>
+      <div class="text-center text-xs text-gray-400 py-2 border-t border-gray-700 mt-4 pt-4">
+        <span class="bg-gray-800 px-3 py-1 rounded">
+          Completed
+          <% if message.tool_input.present? %>
+            &bull; $<%= sprintf('%.4f', message.tool_input['cost_usd'] || 0) %>
+            &bull; <%= message.tool_input['num_turns'] || 0 %> turns
+          <% end %>
+        </span>
+      </div>
+
+    <% else %>
+      <div class="text-gray-500 text-sm">
+        <%= message.content %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

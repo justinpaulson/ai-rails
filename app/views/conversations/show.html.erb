@@ -1,0 +1,104 @@
+<div class="flex flex-col h-full bg-gray-900">
+  <!-- Header -->
+  <header class="flex-shrink-0 bg-gray-800 border-b border-gray-700 px-4 md:px-6 py-4 relative">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div data-controller="inline-edit"
+             data-inline-edit-url-value="<%= conversation_path(@conversation) %>"
+             data-inline-edit-field-value="conversation"
+             data-inline-edit-sync-id-value="conversation-<%= @conversation.id %>-title">
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg font-semibold text-white cursor-pointer hover:bg-gray-700 rounded px-1 -mx-1 outline-none focus:ring-2 focus:ring-blue-500"
+                id="conversation-title"
+                data-inline-edit-target="display"
+                data-action="click->inline-edit#startEdit keydown->inline-edit#handleKeydown blur->inline-edit#handleBlur"
+                title="Click to rename"><%= @conversation.display_title %></h1>
+            <span data-inline-edit-target="status" class="hidden text-xs"></span>
+          </div>
+          <p class="text-xs text-gray-400 font-mono"><%= @conversation.working_directory %></p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span id="conversation-status" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+          <%= @conversation.active? ? 'bg-green-900 text-green-200' : 'bg-gray-700 text-gray-300' %>">
+          <%= @conversation.status.capitalize %>
+        </span>
+        <% if @conversation.session_id.present? %>
+          <span class="hidden sm:inline text-xs text-gray-500 font-mono" title="Session ID">
+            <%= @conversation.session_id.first(8) %>...
+          </span>
+        <% end %>
+        <%= button_to conversation_path(@conversation),
+                      method: :delete,
+                      form: { data: { turbo_confirm: "Delete this conversation? This cannot be undone." } },
+                      class: "text-gray-400 hover:text-red-400 transition-colors p-1",
+                      title: "Delete conversation" do %>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+          </svg>
+        <% end %>
+      </div>
+    </div>
+    <!-- Floating Todo List -->
+    <div class="absolute top-full right-6 z-10 mt-2">
+      <%= render "conversations/todo_list", conversation: @conversation %>
+    </div>
+  </header>
+
+  <!-- Messages -->
+  <div class="flex-1 overflow-y-auto px-4 md:px-6 py-4" id="messages-container"
+       data-controller="scroll-bottom">
+    <%= turbo_stream_from @conversation %>
+
+    <div id="messages" class="space-y-2">
+      <% grouped_messages(@messages).each do |item| %>
+        <% if item[:type] == :tool_call %>
+          <%= render "messages/tool_call", tool_use: item[:tool_use], tool_result: item[:tool_result] %>
+        <% else %>
+          <%= render "messages/message", message: item[:message] %>
+        <% end %>
+      <% end %>
+    </div>
+
+    <!-- Typing indicator -->
+    <div id="typing-indicator" class="hidden mt-4">
+      <div class="flex items-center gap-2 text-gray-400">
+        <div class="flex space-x-1">
+          <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
+          <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+          <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+        </div>
+        <span class="text-sm">Claude is thinking...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <footer class="flex-shrink-0 bg-gray-800 border-t border-gray-700 px-4 md:px-6 py-4">
+    <%= form_with url: conversation_messages_path(@conversation),
+                  method: :post,
+                  data: {
+                    controller: "message-form",
+                    action: "turbo:submit-end->message-form#reset"
+                  },
+                  class: "flex gap-4" do |f| %>
+      <div class="flex-1 relative">
+        <%= text_area_tag :prompt,
+                          nil,
+                          placeholder: "Send a message to Claude Code...",
+                          rows: 1,
+                          class: "w-full px-4 py-3 bg-gray-700 border border-gray-600 text-white placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none",
+                          data: { message_form_target: "input", action: "keydown->message-form#handleKeydown input->message-form#autoResize" } %>
+      </div>
+      <%= render "conversations/stop_button", conversation: @conversation %>
+      <button type="submit"
+              class="px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+              style="height: 48px;"
+              data-message-form-target="submit">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+        </svg>
+      </button>
+    <% end %>
+  </footer>
+</div>

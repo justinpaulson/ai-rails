@@ -1,0 +1,11 @@
+<%= link_to conversation_path(conversation),
+            class: "block px-3 py-2 rounded-lg text-sm transition-colors #{conversation == @conversation ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}",
+            data: { turbo_frame: "_top" } do %>
+  <div class="flex items-center gap-2">
+    <% if conversation.running? %>
+      <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse flex-shrink-0"></div>
+    <% end %>
+    <span class="truncate flex-1" id="conversation-<%= conversation.id %>-title"><%= conversation.display_title %></span>
+  </div>
+  <div class="text-xs text-gray-500 mt-0.5 truncate"><%= time_ago_in_words(conversation.updated_at) %> ago</div>
+<% end %>

@@ -1,0 +1,10 @@
+<%= turbo_stream.replace "stop-button" do %>
+  <%= render "conversations/stop_button", conversation: @conversation %>
+<% end %>
+
+<%= turbo_stream.replace "conversation-status" do %>
+  <span id="conversation-status" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+    <%= @conversation.active? ? 'bg-green-900 text-green-200' : 'bg-gray-700 text-gray-300' %>">
+    <%= @conversation.status.capitalize %>
+  </span>
+<% end %>

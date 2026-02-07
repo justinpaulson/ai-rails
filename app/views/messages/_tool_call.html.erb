@@ -1,0 +1,46 @@
+<% tool_use = local_assigns[:tool_use] %>
+<% tool_result = local_assigns[:tool_result] %>
+<% has_result = tool_result.present? %>
+<% preview = tool_context_preview(tool_use) %>
+
+<div class="mb-2 flex justify-start" id="tool-call-<%= tool_use.tool_use_id %>">
+  <details class="group border rounded-lg w-full max-w-full md:max-w-2xl <%= has_result ? 'border-gray-200 bg-gray-50' : 'border-amber-200 bg-amber-50' %>">
+    <summary class="flex items-center gap-2 px-3 py-2 cursor-pointer list-none select-none hover:bg-opacity-80">
+      <%= tool_status_icon(has_result) %>
+      <span class="text-sm font-semibold font-mono <%= has_result ? 'text-gray-700' : 'text-amber-800' %>">
+        <%= tool_use.tool_name %>
+      </span>
+      <% if preview.present? %>
+        <code class="text-xs px-1.5 py-0.5 rounded <%= has_result ? 'bg-gray-200 text-gray-600' : 'bg-amber-100 text-amber-700' %> truncate max-w-[200px] md:max-w-md">
+          <%= preview %>
+        </code>
+      <% end %>
+      <span class="ml-auto flex items-center gap-2">
+        <% if has_result %>
+          <span class="text-xs text-gray-400"><%= number_to_human_size(tool_result.content&.bytesize || 0) %></span>
+        <% else %>
+          <span class="text-xs text-amber-600">running</span>
+        <% end %>
+        <svg class="w-4 h-4 text-gray-400 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+      </span>
+    </summary>
+
+    <div class="border-t <%= has_result ? 'border-gray-200' : 'border-amber-200' %> px-3 py-2 space-y-2">
+      <% if tool_use.tool_input.present? %>
+        <div>
+          <div class="text-xs font-medium text-gray-500 mb-1">Input</div>
+          <pre class="text-xs p-2 bg-white border border-gray-200 rounded overflow-x-auto max-h-48 overflow-y-auto text-gray-800 whitespace-pre-wrap break-all"><%= format_tool_input(tool_use) %></pre>
+        </div>
+      <% end %>
+
+      <% if has_result %>
+        <div>
+          <div class="text-xs font-medium text-gray-500 mb-1">Output</div>
+          <pre class="text-xs p-2 bg-white border border-gray-200 rounded overflow-x-auto max-h-64 overflow-y-auto text-gray-800 whitespace-pre-wrap break-all"><%= tool_result.content.to_s.truncate(5000) %></pre>
+        </div>
+      <% end %>
+    </div>
+  </details>
+</div>
